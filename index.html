@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador RISC-V Monociclo 32-bit</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Contenedor Principal -->
+    <div class="container">
+        
+        <!-- Encabezado -->
+        <header class="header">
+            <h1 class="title">Simulador RISC-V Monociclo 32-bit</h1>
+            <p class="subtitle">Procesador de ciclo único con soporte para instrucciones R, I, L, S y B</p>
+        </header>
+
+        <!-- Grid Principal -->
+        <div class="main-grid">
+            
+            <!-- ============================================ -->
+            <!-- PANEL IZQUIERDO: Instrucciones y Controles -->
+            <!-- ============================================ -->
+            <div class="left-panel">
+                
+                <!-- Banco de Instrucciones -->
+                <section class="card">
+                    <h2 class="card-title">
+                        <span class="icon">📝</span>
+                        Banco de Instrucciones
+                    </h2>
+                    
+                    <!-- Lista de instrucciones -->
+                    <div id="instructionList" class="instruction-list"></div>
+                    
+                    <!-- Input para agregar instrucciones -->
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="newInstructionInput" 
+                            placeholder="Ej: addi x1, x0, 5"
+                            class="instruction-input"
+                        />
+                        <button id="addInstructionBtn" class="btn-add">➕</button>
+                    </div>
+                    
+                    <!-- Ayuda de ejemplos -->
+                    <div class="help-box">
+                        <div class="help-title">ℹ️ Ejemplos:</div>
+                        <ul class="help-list">
+                            <li>• addi x1, x0, 10</li>
+                            <li>• add x3, x1, x2</li>
+                            <li>• sw x1, 0, x2</li>
+                            <li>• lw x4, 0, x2</li>
+                            <li>• beq x1, x2, 2</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Controles de Ejecución -->
+                <section class="card">
+                    <h2 class="card-title">Controles</h2>
+                    
+                    <div class="control-buttons">
+                        <button id="stepBtn" class="btn btn-step">
+                            ▶️ Ejecutar Paso
+                        </button>
+                        
+                        <button id="runBtn" class="btn btn-run">
+                            ⏩ Ejecutar Todo
+                        </button>
+                        
+                        <button id="resetBtn" class="btn btn-reset">
+                            🔄 Reiniciar
+                        </button>
+                    </div>
+                    
+                    <!-- Información del PC -->
+                    <div class="pc-info">
+                        <div class="pc-value">
+                            <strong>PC (Program Counter):</strong> <span id="pcValue">0</span>
+                        </div>
+                        <div class="current-instruction">
+                            Instrucción actual: <span id="currentInstruction">N/A</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Unidad de Control -->
+                <section class="card">
+                    <h2 class="card-title">
+                        <span class="icon">⚙️</span>
+                        Unidad de Control
+                    </h2>
+                    
+                    <div id="controlSignals" class="control-signals"></div>
+                </section>
+                
+            </div>
+
+            <!-- ============================================ -->
+            <!-- PANEL DERECHO: Registros, ALU y Memoria -->
+            <!-- ============================================ -->
+            <div class="right-panel">
+                
+                <!-- Banco de Registros -->
+                <section class="card">
+                    <h2 class="card-title">
+                        <span class="icon">📊</span>
+                        Banco de Registros
+                    </h2>
+                    
+                    <div id="registerBank" class="register-bank"></div>
+                </section>
+
+                <!-- ALU -->
+                <section class="card">
+                    <h2 class="card-title">
+                        <span class="icon">🔧</span>
+                        ALU (Unidad Aritmético-Lógica)
+                    </h2>
+                    
+                    <div class="alu-display">
+                        <div class="alu-operand">
+                            <div class="alu-label">Operando A</div>
+                            <div id="aluOperandA" class="alu-value">0</div>
+                        </div>
+                        
+                        <div class="alu-result">
+                            <div class="alu-label">Resultado</div>
+                            <div id="aluResult" class="alu-value">0</div>
+                        </div>
+                        
+                        <div class="alu-operand">
+                            <div class="alu-label">Operando B</div>
+                            <div id="aluOperandB" class="alu-value">0</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Memoria de Datos -->
+                <section class="card">
+                    <h2 class="card-title">
+                        <span class="icon">💾</span>
+                        Memoria de Datos (Primeras 32 palabras)
+                    </h2>
+                    
+                    <div id="memoryBank" class="memory-bank"></div>
+                </section>
+
+                <!-- Log de Ejecución -->
+                <section class="card">
+                    <h2 class="card-title">
+                        <span class="icon">📋</span>
+                        Log de Ejecución
+                    </h2>
+                    
+                    <div id="executionLog" class="execution-log">
+                        <div class="log-empty">No hay ejecuciones todavía...</div>
+                    </div>
+                </section>
+                
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Script principal -->
+    <script src="js/script.js"></script>
+</body>
+</html>
