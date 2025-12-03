@@ -1,0 +1,488 @@
+/* ============================================
+   RESET Y ESTILOS GLOBALES
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* ============================================
+   CONTENEDOR PRINCIPAL
+   ============================================ */
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ============================================
+   ENCABEZADO
+   ============================================ */
+
+.header {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    margin-bottom: 24px;
+}
+
+.title {
+    font-size: 2rem;
+    color: #4c51bf;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: #718096;
+    font-size: 1rem;
+}
+
+/* ============================================
+   GRID PRINCIPAL
+   ============================================ */
+
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 24px;
+}
+
+@media (max-width: 1024px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.left-panel,
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ============================================
+   TARJETAS (CARDS)
+   ============================================ */
+
+.card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    color: #4c51bf;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.icon {
+    background: #ebf4ff;
+    padding: 8px;
+    border-radius: 8px;
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+/* ============================================
+   BANCO DE INSTRUCCIONES
+   ============================================ */
+
+.instruction-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.instruction-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    background: #f7fafc;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.instruction-item.active {
+    background: #ebf4ff;
+    border: 2px solid #4c51bf;
+}
+
+.instruction-index {
+    color: #718096;
+    margin-right: 12px;
+    font-weight: bold;
+}
+
+.instruction-text {
+    flex: 1;
+}
+
+.delete-btn {
+    background: none;
+    border: none;
+    color: #e53e3e;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px;
+    transition: color 0.2s;
+}
+
+.delete-btn:hover {
+    color: #c53030;
+}
+
+/* Input group para agregar instrucciones */
+.input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.instruction-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: 'Courier New', monospace;
+}
+
+.instruction-input:focus {
+    outline: none;
+    border-color: #4c51bf;
+}
+
+.btn-add {
+    background: #4c51bf;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: background 0.2s;
+}
+
+.btn-add:hover {
+    background: #434190;
+}
+
+/* Caja de ayuda */
+.help-box {
+    background: #f7fafc;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 16px;
+    font-size: 0.85rem;
+}
+
+.help-title {
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 8px;
+}
+
+.help-list {
+    list-style: none;
+    color: #4a5568;
+    line-height: 1.8;
+}
+
+/* ============================================
+   CONTROLES DE EJECUCIÓN
+   ============================================ */
+
+.control-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: white;
+}
+
+.btn:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-step {
+    background: #48bb78;
+}
+
+.btn-step:hover:not(:disabled) {
+    background: #38a169;
+}
+
+.btn-run {
+    background: #4299e1;
+}
+
+.btn-run:hover:not(:disabled) {
+    background: #3182ce;
+}
+
+.btn-reset {
+    background: #f56565;
+}
+
+.btn-reset:hover {
+    background: #e53e3e;
+}
+
+/* Información del PC */
+.pc-info {
+    background: #ebf4ff;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.pc-value {
+    font-size: 0.95rem;
+    color: #2d3748;
+    margin-bottom: 8px;
+}
+
+.current-instruction {
+    font-size: 0.85rem;
+    color: #4a5568;
+    font-family: 'Courier New', monospace;
+}
+
+/* ============================================
+   SEÑALES DE CONTROL
+   ============================================ */
+
+.control-signals {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.control-signal {
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.control-signal.active {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.control-signal.inactive {
+    background: #f7fafc;
+    color: #718096;
+}
+
+.signal-name {
+    font-weight: bold;
+}
+
+.signal-value {
+    font-size: 0.75rem;
+    margin-top: 4px;
+}
+
+/* ============================================
+   BANCO DE REGISTROS
+   ============================================ */
+
+.register-bank {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .register-bank {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.register {
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.register.zero {
+    background: #e2e8f0;
+}
+
+.register.active {
+    background: #ebf4ff;
+    border: 1px solid #4c51bf;
+}
+
+.register.inactive {
+    background: #f7fafc;
+}
+
+.register-name {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #4a5568;
+    margin-bottom: 4px;
+}
+
+.register-value {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #2d3748;
+}
+
+/* ============================================
+   ALU
+   ============================================ */
+
+.alu-display {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    text-align: center;
+}
+
+.alu-operand,
+.alu-result {
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.alu-operand {
+    background: #ebf8ff;
+}
+
+.alu-result {
+    background: #faf5ff;
+}
+
+.alu-label {
+    font-size: 0.75rem;
+    color: #4a5568;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.alu-value {
+    font-size: 1.8rem;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #2d3748;
+}
+
+/* ============================================
+   MEMORIA DE DATOS
+   ============================================ */
+
+.memory-bank {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .memory-bank {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.memory-cell {
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.memory-cell.active {
+    background: #feebc8;
+    border: 1px solid #ed8936;
+}
+
+.memory-cell.inactive {
+    background: #f7fafc;
+}
+
+.memory-address {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #4a5568;
+    margin-bottom: 4px;
+}
+
+.memory-value {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #2d3748;
+}
+
+/* ============================================
+   LOG DE EJECUCIÓN
+   ============================================ */
+
+.execution-log {
+    background: #1a202c;
+    color: #48bb78;
+    padding: 16px;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.log-empty {
+    color: #718096;
+}
+
+.log-entry {
+    margin-bottom: 8px;
+}
+
+/* Scrollbar personalizado */
+.execution-log::-webkit-scrollbar {
+    width: 8px;
+}
+
+.execution-log::-webkit-scrollbar-track {
+    background: #2d3748;
+    border-radius: 4px;
+}
+
+.execution-log::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 4px;
+}
+
+.execution-log::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+}
