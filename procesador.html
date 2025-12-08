@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesador RISC-V de Un Ciclo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            padding: 20px;
+            max-width: 1400px;
+        }
+        h1 {
+            color: #8B0000;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        canvas {
+            border: 3px solid #333;
+            border-radius: 10px;
+            display: block;
+            background: #fafafa;
+            cursor: default;
+        }
+        .info-box {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            min-height: 120px;
+            transition: all 0.3s ease;
+        }
+        .info-box.default {
+            background: #f0f0f0;
+            border: 2px solid #ccc;
+        }
+        .info-box.selected {
+            background: #e3f2fd;
+            border: 2px solid #2196F3;
+        }
+        .info-box h3 {
+            color: #1976D2;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        .info-box p {
+            color: #333;
+            line-height: 1.6;
+        }
+        .legend {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+        }
+        .legend h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        .legend-item {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 5px;
+        }
+        .legend-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 1px solid #333;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Procesador RISC-V de Un Ciclo</h1>
+        <canvas id="processorCanvas" width="1350" height="750"></canvas>
+        
+        <div id="infoBox" class="info-box default">
+            <p>Haz clic en cualquier componente para ver su descripción detallada</p>
+        </div>
+
+        <div class="legend">
+            <h4>Leyenda de Buses y Señales:</h4>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #00BFFF;"></span>
+                <span>Instrucción [31:0]</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #32CD32;"></span>
+                <span>Datos de registros (d1, d2)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #DC143C;"></span>
+                <span>Resultado ALU / Direcciones</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #9370DB;"></span>
+                <span>Write Back</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #FF8C00;"></span>
+                <span>Inmediatos</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #999; border-style: dashed;"></span>
+                <span>Señales de control</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var canvas = document.getElementById('processorCanvas');
+        var ctx = canvas.getContext('2d');
+        var infoBox = document.getElementById('infoBox');
+        var hoveredComponent = null;
+        var selectedComponent = null;
+
+        var components = {
+            pc: { x: 40, y: 280, width: 70, height: 90, label: 'PC', color: '#FFE5B4', type: 'rect' },
+            instMem: { x: 150, y: 80, width: 180, height: 300, label: 'Memoria de programa', color: '#E6F3FF', type: 'memory' },
+            mux1: { x: 380, y: 200, width: 50, height: 100, label: 'MUX', color: '#E0E0E0', type: 'mux' },
+            orderSign: { x: 380, y: 350, width: 120, height: 70, label: 'Orden & Sign Extend', color: '#FFFACD', type: 'rect' },
+            mux2: { x: 540, y: 200, width: 50, height: 100, label: 'MUX', color: '#E0E0E0', type: 'mux' },
+            signExtend: { x: 540, y: 350, width: 120, height: 70, label: 'Sign Extend', color: '#FFFACD', type: 'rect' },
+            regFile: { x: 700, y: 150, width: 180, height: 280, label: 'Banco de registros (RF)', color: '#FFE6F0', type: 'regfile' },
+            mux3: { x: 930, y: 250, width: 50, height: 100, label: 'MUX', color: '#E0E0E0', type: 'mux' },
+            alu: { x: 1020, y: 230, width: 120, height: 150, label: 'ALU', color: '#E6FFE6', type: 'alu' },
+            mux4: { x: 1180, y: 250, width: 50, height: 100, label: 'MUX', color: '#E0E0E0', type: 'mux' },
+            dataMem: { x: 1070, y: 480, width: 180, height: 200, label: 'Memoria de datos (DM)', color: '#FFF0E6', type: 'memory' },
+            controlUnit: { x: 600, y: 580, width: 250, height: 120, label: 'Unidad de Control (CU)', color: '#F0E6FF', type: 'rect' },
+            adder1: { x: 120, y: 200, width: 80, height: 60, label: 'PC+4', color: '#FFD9B3', type: 'rect' },
+            adder2: { x: 280, y: 450, width: 80, height: 60, label: 'ADD', color: '#FFD9B3', type: 'rect' }
+        };
+
+        var componentInfo = {
+            pc: 'Program Counter - Registro que mantiene la dirección de la siguiente instrucción a ejecutar. Se incrementa en 4 bytes (tamaño de una instrucción) en cada ciclo, o cambia a una dirección de salto en caso de branch.',
+            instMem: 'Memoria de Programa - Almacena las instrucciones del programa en formato de código máquina. Es de solo lectura y contiene instrucciones como: lw (load word), add, beq (branch equal), sub, etc. La dirección viene del PC.',
+            mux1: 'Multiplexor - Selecciona entre diferentes campos de la instrucción para generar la dirección del registro destino o fuente.',
+            orderSign: 'Orden & Sign Extend - Procesa y reordena campos de la instrucción, extendiendo el signo de inmediatos para operaciones que lo requieran.',
+            mux2: 'Multiplexor - Selecciona entre diferentes campos inmediatos de la instrucción según el tipo de instrucción (I-type, S-type, B-type, etc.).',
+            signExtend: 'Sign Extend - Extiende inmediatos de 12 o 20 bits a 32 bits, preservando el signo. Procesa los campos imm(11:5) e imm(4:0) de la instrucción.',
+            regFile: 'Banco de Registros - Contiene 32 registros de propósito general (x0-x31). Tiene 2 puertos de lectura (a1, a2) que producen salidas (d1, d2) y 1 puerto de escritura (ad) con señal de habilitación (we). El registro x0 siempre vale 0.',
+            mux3: 'Multiplexor - Selecciona el segundo operando para la ALU: puede ser el contenido de un registro (d2) o un valor inmediato extendido.',
+            alu: 'ALU (Arithmetic Logic Unit) - Realiza operaciones aritméticas y lógicas según el código de operación (alu_op). Operaciones: suma (0000), resta (0001), andi (0010), slt (0100), sltu (0110), seq (0111), xor (1000), srl/sra (1010/1011), or (1100), and (1110). Genera señal alu_zero cuando el resultado es cero (usado para branches).',
+            mux4: 'Multiplexor - Selecciona el dato que se escribirá en el banco de registros: puede ser el resultado de la ALU o un dato leído de la memoria de datos (para instrucciones load).',
+            dataMem: 'Memoria de Datos - Almacena los datos del programa. Soporta operaciones de lectura (load) y escritura (store). La dirección viene del resultado de la ALU. Contiene datos como: 0x00000005, 0x0000000AF, 0x00000007, 0x00000003, etc.',
+            controlUnit: 'Unidad de Control - Decodifica el opcode de la instrucción y genera todas las señales de control: imm_rel (selección de inmediato), br_ncq (branch condicional), br_uncon (branch incondicional), alu_src (fuente de ALU), alu_op (operación ALU), wen (write enable memoria), we (write enable registros).',
+            adder1: 'Sumador PC+4 - Calcula la dirección de la siguiente instrucción secuencial sumando 4 al PC actual. Este es el comportamiento por defecto cuando no hay saltos.',
+            adder2: 'Sumador Branch - Calcula la dirección destino para instrucciones de salto (branch/jump) sumando el PC actual con el offset inmediato extendido.'
+        };
+
+        function drawLine(x1, y1, x2, y2, color, width) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.stroke();
+        }
+
+        function drawRect(comp, isHovered, isSelected) {
+            ctx.fillStyle = isSelected ? '#FFD700' : isHovered ? '#FFA500' : comp.color;
+            ctx.fillRect(comp.x, comp.y, comp.width, comp.height);
+            ctx.strokeStyle = isSelected ? '#FF0000' : '#333';
+            ctx.lineWidth = isSelected ? 3 : 2;
+            ctx.strokeRect(comp.x, comp.y, comp.width, comp.height);
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(comp.label, comp.x + comp.width/2, comp.y + comp.height/2 + 4);
+        }
+
+        function drawMemory(comp, isHovered, isSelected) {
+            var fillColor = comp.color;
+            if (isSelected) {
+                fillColor = '#FFD700';
+            } else if (isHovered) {
+                fillColor = '#FFA500';
+            }
+            ctx.fillStyle = fillColor;
+            ctx.fillRect(comp.x, comp.y, comp.width, comp.height);
+            
+            var strokeColor = isSelected ? '#FF0000' : '#333';
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = isSelected ? 3 : 2;
+            ctx.strokeRect(comp.x, comp.y, comp.width, comp.height);
+            
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(comp.label, comp.x + comp.width/2, comp.y + 20);
+            
+            ctx.font = '10px Courier';
+            ctx.textAlign = 'left';
+            
+            var labelText = comp.label.toLowerCase();
+            var hasPrograma = labelText.indexOf('programa') !== -1;
+            
+            if (hasPrograma) {
+                var instructions = [
+                    '0: lw x0, x1, Else',
+                    '4: add x1, x0, x2',
+                    '8: beq x0, x0, Exit',
+                    '12: sub x1, x0, x2'
+                ];
+                for (var i = 0; i < instructions.length; i++) {
+                    ctx.fillText(instructions[i], comp.x + 10, comp.y + 50 + i * 30);
+                }
+            } else {
+                var data = [
+                    '0: 0x00000005',
+                    '4: 0x0000000AF',
+                    '8: 0x00000007',
+                    '12: 0x00000003'
+                ];
+                for (var i = 0; i < data.length; i++) {
+                    ctx.fillText(data[i], comp.x + 10, comp.y + 50 + i * 35);
+                }
+            }
+        }
+
+        function drawRegFile(comp, isHovered, isSelected) {
+            ctx.fillStyle = isSelected ? '#FFD700' : isHovered ? '#FFA500' : comp.color;
+            ctx.fillRect(comp.x, comp.y, comp.width, comp.height);
+            ctx.strokeStyle = isSelected ? '#FF0000' : '#333';
+            ctx.lineWidth = isSelected ? 3 : 2;
+            ctx.strokeRect(comp.x, comp.y, comp.width, comp.height);
+            
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('RF', comp.x + comp.width/2, comp.y + comp.height/2);
+            
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('a1', comp.x + 10, comp.y + 50);
+            ctx.fillText('a2', comp.x + 10, comp.y + 80);
+            ctx.fillText('ad', comp.x + 10, comp.y + 110);
+            ctx.fillText('we', comp.x + 10, comp.y + 140);
+            
+            ctx.textAlign = 'right';
+            ctx.fillText('d1', comp.x + comp.width - 10, comp.y + 50);
+            ctx.fillText('d2', comp.x + comp.width - 10, comp.y + 80);
+            ctx.fillText('do2', comp.x + comp.width - 10, comp.y + 110);
+        }
+
+        function drawALU(comp, isHovered, isSelected) {
+            ctx.beginPath();
+            ctx.moveTo(comp.x, comp.y);
+            ctx.lineTo(comp.x + comp.width, comp.y + comp.height * 0.3);
+            ctx.lineTo(comp.x + comp.width, comp.y + comp.height * 0.7);
+            ctx.lineTo(comp.x, comp.y + comp.height);
+            ctx.closePath();
+            ctx.fillStyle = isSelected ? '#FFD700' : isHovered ? '#FFA500' : comp.color;
+            ctx.fill();
+            ctx.strokeStyle = isSelected ? '#FF0000' : '#333';
+            ctx.lineWidth = isSelected ? 3 : 2;
+            ctx.stroke();
+            
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('ALU', comp.x + comp.width/2, comp.y + comp.height/2);
+            
+            ctx.font = '9px Arial';
+            ctx.fillText('alu_zero', comp.x + comp.width/2, comp.y + comp.height + 15);
+        }
+
+        function drawMux(comp, isHovered, isSelected) {
+            ctx.beginPath();
+            ctx.moveTo(comp.x, comp.y);
+            ctx.lineTo(comp.x + comp.width, comp.y + 20);
+            ctx.lineTo(comp.x + comp.width, comp.y + comp.height - 20);
+            ctx.lineTo(comp.x, comp.y + comp.height);
+            ctx.closePath();
+            ctx.fillStyle = isSelected ? '#FFD700' : isHovered ? '#FFA500' : comp.color;
+            ctx.fill();
+            ctx.strokeStyle = isSelected ? '#FF0000' : '#333';
+            ctx.lineWidth = isSelected ? 3 : 2;
+            ctx.stroke();
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 11px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(comp.label, comp.x + comp.width/2, comp.y + comp.height/2);
+        }
+
+        function drawConnections() {
+            // PC a Adder1 y Memoria
+            drawLine(110, 325, 150, 325, '#666', 3);
+            drawLine(75, 280, 75, 230, '#666', 2);
+            drawLine(75, 230, 120, 230, '#666', 2);
+            
+            // Memoria de programa a MUX1
+            drawLine(330, 230, 380, 230, '#00BFFF', 3);
+            ctx.font = '9px Arial';
+            ctx.fillStyle = '#00BFFF';
+            ctx.fillText('I(31:25)', 350, 220);
+            
+            drawLine(330, 260, 380, 260, '#32CD32', 3);
+            ctx.fillText('I(24:20)', 350, 250);
+            
+            drawLine(330, 290, 380, 290, '#DC143C', 3);
+            ctx.fillText('I(19:15)', 350, 280);
+            
+            drawLine(330, 320, 350, 320, '#8B4513', 3);
+            drawLine(350, 320, 350, 370, '#8B4513', 3);
+            drawLine(350, 370, 380, 370, '#8B4513', 3);
+            ctx.fillStyle = '#8B4513';
+            ctx.fillText('I(11:7)', 355, 340);
+            
+            // MUX1 a MUX2
+            drawLine(430, 250, 540, 250, '#9370DB', 3);
+            
+            // MUX2 a Banco de registros
+            drawLine(590, 250, 700, 250, '#9370DB', 3);
+            
+            // Sign Extend a MUX3
+            drawLine(660, 385, 660, 300, '#FF8C00', 2);
+            drawLine(660, 300, 930, 300, '#FF8C00', 2);
+            
+            // Banco de registros salidas
+            drawLine(880, 200, 1020, 200, '#32CD32', 3);
+            drawLine(1010, 200, 1010, 260, '#32CD32', 3);
+            ctx.fillStyle = '#32CD32';
+            ctx.fillText('d1', 920, 195);
+            
+            drawLine(880, 230, 930, 230, '#32CD32', 3);
+            drawLine(920, 230, 920, 280, '#32CD32', 3);
+            ctx.fillText('d2', 905, 245);
+            
+            // MUX3 a ALU
+            drawLine(980, 300, 1020, 300, '#9370DB', 3);
+            
+            // ALU a MUX4 y Memoria datos
+            drawLine(1140, 305, 1180, 305, '#DC143C', 3);
+            drawLine(1160, 305, 1160, 520, '#DC143C', 2);
+            drawLine(1160, 520, 1070, 520, '#DC143C', 2);
+            
+            // MUX4 a Banco registros (write back)
+            drawLine(1230, 300, 1280, 300, '#9370DB', 3);
+            drawLine(1280, 300, 1280, 120, '#9370DB', 3);
+            drawLine(1280, 120, 840, 120, '#9370DB', 3);
+            drawLine(840, 120, 840, 190, '#9370DB', 3);
+            
+            // Memoria datos a MUX4
+            drawLine(1160, 560, 1200, 560, '#DC143C', 2);
+            drawLine(1200, 560, 1200, 340, '#DC143C', 2);
+            drawLine(1200, 340, 1180, 340, '#DC143C', 2);
+            
+            // Señales de control (punteadas)
+            ctx.setLineDash([3, 3]);
+            drawLine(725, 580, 725, 500, '#999', 1.5);
+            drawLine(1045, 580, 1045, 420, '#999', 1.5);
+            drawLine(955, 600, 955, 350, '#999', 1.5);
+            drawLine(810, 590, 810, 430, '#999', 1.5);
+            ctx.setLineDash([]);
+            
+            ctx.font = '9px Arial';
+            ctx.fillStyle = '#666';
+            ctx.fillText('we', 815, 440);
+            ctx.fillText('alu_src', 960, 360);
+            ctx.fillText('alu_op', 1050, 430);
+            ctx.fillText('imm_rel', 730, 510);
+        }
+
+        function drawProcessor() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawConnections();
+            
+            for (var key in components) {
+                var comp = components[key];
+                var isHovered = hoveredComponent === key;
+                var isSelected = selectedComponent === key;
+                
+                if (comp.type === 'mux') {
+                    drawMux(comp, isHovered, isSelected);
+                } else if (comp.type === 'memory') {
+                    drawMemory(comp, isHovered, isSelected);
+                } else if (comp.type === 'regfile') {
+                    drawRegFile(comp, isHovered, isSelected);
+                } else if (comp.type === 'alu') {
+                    drawALU(comp, isHovered, isSelected);
+                } else {
+                    drawRect(comp, isHovered, isSelected);
+                }
+            }
+        }
+
+        function isPointInComponent(x, y, comp) {
+            if (comp.type === 'alu') {
+                return x >= comp.x && x <= comp.x + comp.width && y >= comp.y && y <= comp.y + comp.height;
+            }
+            return x >= comp.x && x <= comp.x + comp.width && y >= comp.y && y <= comp.y + comp.height;
+        }
+
+        function updateInfoBox() {
+            if (selectedComponent) {
+                var comp = components[selectedComponent];
+                var info = componentInfo[selectedComponent];
+                infoBox.className = 'info-box selected';
+                var h3 = document.createElement('h3');
+                h3.textContent = comp.label;
+                var p = document.createElement('p');
+                p.textContent = info;
+                infoBox.innerHTML = '';
+                infoBox.appendChild(h3);
+                infoBox.appendChild(p);
+            } else {
+                infoBox.className = 'info-box default';
+                infoBox.innerHTML = '<p>Haz clic en cualquier componente para ver su descripción detallada</p>';
+            }
+        }
+
+        canvas.addEventListener('mousemove', function(e) {
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            var found = null;
+            for (var key in components) {
+                if (isPointInComponent(x, y, components[key])) {
+                    found = key;
+                    break;
+                }
+            }
+            if (found !== hoveredComponent) {
+                hoveredComponent = found;
+                canvas.style.cursor = found ? 'pointer' : 'default';
+                drawProcessor();
+            }
+        });
+
+        canvas.addEventListener('click', function(e) {
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            var found = null;
+            for (var key in components) {
+                if (isPointInComponent(x, y, components[key])) {
+                    found = key;
+                    break;
+                }
+            }
+            selectedComponent = found;
+            updateInfoBox();
+            drawProcessor();
+        });
+
+        drawProcessor();
+    </script>
+</body>
+</html>
